@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Shirt Quilt Planner — Block Layout Tool</title>
+    <meta name="description" content="Plan your t-shirt quilt block arrangement. Upload block dimensions, set your quilt size, and get a visual layout suggestion.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-icon">&#9641;&#9641;<br>&#9641;&#9641;</div>
+                <div>
+                    <h1>T-Shirt Quilt Planner</h1>
+                    <p class="subtitle">Design your perfect block arrangement</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-grid">
+            <!-- LEFT COLUMN: Inputs -->
+            <div class="input-column">
+                <!-- Quilt Settings Card -->
+                <section class="card" id="settings-card">
+                    <h2><span class="card-icon">📐</span> Quilt Settings</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="quilt-width">Target Width (in)</label>
+                            <input type="number" id="quilt-width" value="60" min="1" step="0.25">
+                        </div>
+                        <div class="form-group">
+                            <label for="quilt-height">Target Height (in)</label>
+                            <input type="number" id="quilt-height" value="80" min="1" step="0.25">
+                        </div>
+                        <div class="form-group">
+                            <label for="sashing-width">Sashing Width (in)</label>
+                            <input type="number" id="sashing-width" value="0" min="0" step="0.25">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label" for="maximize-color-dist">
+                            <input type="checkbox" id="maximize-color-dist">
+                            <span class="checkbox-custom"></span>
+                            Maximize color distribution
+                        </label>
+                        <label class="checkbox-label" for="minimize-partial-seams">
+                            <input type="checkbox" id="minimize-partial-seams" checked>
+                            <span class="checkbox-custom"></span>
+                            Minimize partial seams
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Add Block Card -->
+                <section class="card" id="add-block-card">
+                    <h2><span class="card-icon">➕</span> Add Block</h2>
+                    <form id="block-form" autocomplete="off">
+                        <div class="form-row-inline">
+                            <div class="form-group fg-name">
+                                <label for="block-name">Name</label>
+                                <input type="text" id="block-name" placeholder="e.g. Grateful Dead 2019" required>
+                            </div>
+                            <div class="form-group fg-color">
+                                <label for="block-color">Color</label>
+                                <input type="color" id="block-color" value="#e74c3c">
+                            </div>
+                        </div>
+                        <div class="form-row-inline four-col">
+                            <div class="form-group">
+                                <label for="block-min-width">Min W</label>
+                                <input type="number" id="block-min-width" placeholder="10" min="1" step="0.25" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="block-max-width">Max W</label>
+                                <input type="number" id="block-max-width" placeholder="14" min="1" step="0.25" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="block-min-height">Min H</label>
+                                <input type="number" id="block-min-height" placeholder="10" min="1" step="0.25" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="block-max-height">Max H</label>
+                                <input type="number" id="block-max-height" placeholder="14" min="1" step="0.25" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="add-block-btn">Add Block</button>
+                    </form>
+
+                    <div class="divider"><span>or</span></div>
+
+                    <div class="csv-upload" id="csv-drop-zone">
+                        <div class="csv-upload-content">
+                            <div class="upload-icon">📄</div>
+                            <p>Drag &amp; drop a CSV file here</p>
+                            <p class="upload-sub">or click to browse</p>
+                        </div>
+                        <input type="file" id="csv-input" accept=".csv" hidden>
+                    </div>
+                    <a href="#" class="sample-link" id="download-sample">⬇ Download sample CSV</a>
+                </section>
+
+                <!-- Block List Card -->
+                <section class="card" id="block-list-card">
+                    <div class="card-header-row">
+                        <h2><span class="card-icon">🧩</span> Blocks <span class="block-count" id="block-count">(0)</span></h2>
+                        <button class="btn btn-small btn-danger" id="clear-all-btn" title="Remove all blocks">Clear All</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="block-table">
+                            <thead>
+                                <tr>
+                                    <th class="th-color"></th>
+                                    <th>Name</th>
+                                    <th>Min W</th>
+                                    <th>Max W</th>
+                                    <th>Min H</th>
+                                    <th>Max H</th>
+                                    <th class="th-actions"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="block-table-body">
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="empty-state">
+                            <p>No blocks added yet.</p>
+                            <p class="empty-sub">Add blocks manually or upload a CSV.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-accent btn-generate" id="generate-btn" disabled>
+                        ✨ Generate Layout
+                    </button>
+                </section>
+            </div>
+
+            <!-- RIGHT COLUMN: Output -->
+            <div class="output-column">
+                <section class="card card-output" id="output-card">
+                    <div class="card-header-row">
+                        <h2><span class="card-icon">🧵</span> Quilt Layout</h2>
+                        <button class="btn btn-small btn-accent" id="export-pdf-btn" disabled>📄 Export PDF</button>
+                    </div>
+                    <div id="output-placeholder" class="output-placeholder">
+                        <div class="placeholder-icon">🪡</div>
+                        <p>Your quilt layout will appear here</p>
+                        <p class="placeholder-sub">Add blocks and click "Generate Layout"</p>
+                    </div>
+                    <div id="quilt-container" class="quilt-container" style="display:none;"></div>
+                    <div id="warnings" class="warnings"></div>
+                    <div id="quilt-legend" class="quilt-legend" style="display:none;"></div>
+                    
+                    <div id="stash-container" class="stash-container" style="display:none;">
+                        <h3>📦 Unplaced Blocks Stash</h3>
+                        <p class="stash-sub">These blocks are not currently on the quilt. Drag them back onto the quilt to insert or swap them.</p>
+                        <div id="stash-list" class="stash-list"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>Made with ❤️ for quilters everywhere</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
